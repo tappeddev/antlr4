@@ -6,6 +6,7 @@ license: "BSD-3-Clause"
 dependencies: 
   logging: ^1.0.1
   collection: ^1.15.0
+  bitcount: ^0.2.0
 dev_dependencies:
   pedantic: ^1.11.0
 

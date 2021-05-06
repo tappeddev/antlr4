@@ -7,6 +7,8 @@
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:bitcount/bitcount.dart';
+
 class BitSet {
   static final Uint32List EmptyBits = Uint32List(0);
   static const BitsPerElement = 8 * 32;
@@ -26,56 +28,8 @@ class BitSet {
   }
 
   static int getBitCount(Uint32List value) {
-    var data = 0;
-    final size = BigInt.from(value.length);
-    final m1 = BigInt.from(0x5555555555555555);
-    final m2 = BigInt.from(0x3333333333333333);
-    final m4 = BigInt.from(0x0F0F0F0F0F0F0F0F);
-    final m8 = BigInt.from(0x00FF00FF00FF00FF);
-    final m16 = BigInt.from(0x0000FFFF0000FFFF);
-    final h01 = BigInt.from(0x0101010101010101);
-
-    var bitCount = BigInt.from(0);
-    final limit30 = size - size % BigInt.from(30);
-
-    // 64-bit tree merging (merging3)
-    for (var i = 0; i < limit30.toInt(); i += 30, data += 30) {
-      var acc = BigInt.from(0);
-      for (var j = 0; j < 30; j += 3) {
-        var count1 = BigInt.from(value[data + j]);
-        var count2 = BigInt.from(value[data + j + 1]);
-        var half1 = BigInt.from(value[data + j + 2]);
-        var half2 = half1;
-        half1 &= m1;
-        half2 = (half2 >> 1) & m1;
-        count1 -= (count1 >> 1) & m1;
-        count2 -= (count2 >> 1) & m1;
-        count1 += half1;
-        count2 += half2;
-        count1 = (count1 & m2) + ((count1 >> 2) & m2);
-        count1 += (count2 & m2) + ((count2 >> 2) & m2);
-        acc += (count1 & m4) + ((count1 >> 4) & m4);
-      }
-
-      acc = (acc & m8) + ((acc >> 8) & m8);
-      acc = (acc + (acc >> 16)) & m16;
-      acc = acc + (acc >> 32);
-      bitCount += acc;
-    }
-
-    // count the bits of the remaining bytes (MAX 29*8) using
-    // "Counting bits set, in parallel" from the "Bit Twiddling Hacks",
-    // the code uses wikipedia's 64-bit popcount_3() implementation:
-    // http://en.wikipedia.org/wiki/Hamming_weight#Efficient_implementation
-    for (var i = 0; i < (size - limit30).toInt(); i++) {
-      var x = BigInt.from(value[data + i]);
-      x = x - ((x >> 1) & m1);
-      x = (x & m2) + ((x >> 2) & m2);
-      x = (x + (x >> 4)) & m4;
-      bitCount += ((x * h01) >> 56);
-    }
-
-    return bitCount.toInt();
+    return value.fold<int>(
+        0, (previousValue, element) => previousValue + element.bitCount());
   }
 
   static final List<int> index64 = [
