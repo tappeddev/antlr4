@@ -99,11 +99,16 @@ class BitSet {
     63
   ];
 
-  static int BitScanForward(int value) {
+  static int bitScanForward(int value) {
     if (value == 0) return -1;
 
-    const debruijn64 = 0x03f79d71b4cb0a89;
-    return index64[(((value ^ (value - 1)) * debruijn64) >> 58) % 64];
+    final debruijn64 = BigInt.from(0x03f79d71b4cb0a89);
+
+    final first = BigInt.from(value ^ (value - 1));
+
+    final second = (first * debruijn64);
+
+    return index64[((second >> 58) % BigInt.from(64)).toInt()];
   }
 
   BitSet clone() {
@@ -169,7 +174,7 @@ class BitSet {
     var current = _data[i] & ~((1 << (fromIndex % BitsPerElement)) - 1);
 
     while (true) {
-      final bit = BitScanForward(current);
+      final bit = bitScanForward(current);
       if (bit >= 0) return bit + i * BitsPerElement;
 
       i++;
