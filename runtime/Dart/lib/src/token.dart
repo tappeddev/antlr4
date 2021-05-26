@@ -7,7 +7,6 @@
 import 'input_stream.dart';
 import 'interval_set.dart';
 import 'misc/pair.dart';
-import 'recognizer.dart';
 import 'token_source.dart';
 
 /// A token has properties: text, type, line, character position in the line
@@ -45,14 +44,14 @@ abstract class Token {
   static const int MIN_USER_CHANNEL_VALUE = 2;
 
   /// Get the text of the token.
-  String get text;
+  String? get text;
 
   /// Get the token type of the token */
   int get type;
 
   /// The line number on which the 1st character of this token was matched,
   ///  line=1..n
-  int get line;
+  int? get line;
 
   /// The index of the first character of this token relative to the
   ///  beginning of the line at which it occurs, 0..n-1
@@ -109,7 +108,7 @@ class CommonToken extends WritableToken {
   int type;
 
   @override
-  int line;
+  int? line;
 
   @override
   int charPositionInLine = -1; // set to invalid position
@@ -121,7 +120,7 @@ class CommonToken extends WritableToken {
   /// [CommonToken]. Tokens created by a [CommonTokenFactory] from
   /// the same source and input stream share a reference to the same
   /// [Pair] containing these values.</p>
-  Pair<TokenSource?, CharStream?> source;
+  late Pair<TokenSource?, CharStream?> source;
 
   /// This is the backing field for {@link #getText} when the token text is
   /// explicitly set in the constructor or via {@link #setText}.
@@ -133,10 +132,10 @@ class CommonToken extends WritableToken {
   int tokenIndex = -1;
 
   @override
-  int? startIndex;
+  int startIndex;
 
   @override
-  int? stopIndex;
+  int stopIndex;
 
   /// Constructs a new [CommonToken] with the specified token type and
   /// text.
@@ -147,8 +146,8 @@ class CommonToken extends WritableToken {
     this.type, {
     this.source = EMPTY_SOURCE,
     this.channel = Token.DEFAULT_CHANNEL,
-    this.startIndex,
-    this.stopIndex,
+    this.startIndex = -1,
+    this.stopIndex = -1,
     text,
   }) {
     _text = text;
@@ -169,15 +168,14 @@ class CommonToken extends WritableToken {
   /// {@link Token#getInputStream}.</p>
   ///
   /// @param oldToken The token to copy.
-  CommonToken.copy(Token oldToken) {
-    type = oldToken.type;
-    line = oldToken.line;
-    tokenIndex = oldToken.tokenIndex;
-    charPositionInLine = oldToken.charPositionInLine;
-    channel = oldToken.channel;
-    startIndex = oldToken.startIndex;
-    stopIndex = oldToken.stopIndex;
-
+  CommonToken.copy(Token oldToken)
+      : type = oldToken.type,
+        line = oldToken.line,
+        tokenIndex = oldToken.tokenIndex,
+        charPositionInLine = oldToken.charPositionInLine,
+        channel = oldToken.channel,
+        startIndex = oldToken.startIndex,
+        stopIndex = oldToken.stopIndex {
     if (oldToken is CommonToken) {
       _text = oldToken.text;
       source = oldToken.source;
@@ -199,6 +197,7 @@ class CommonToken extends WritableToken {
     final input = inputStream;
     if (input == null) return null;
     final n = input.size;
+
     if (startIndex < n && stopIndex < n) {
       return input.getText(Interval.of(startIndex, stopIndex));
     } else {

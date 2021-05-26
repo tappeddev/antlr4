@@ -14,21 +14,19 @@ import '../../token.dart';
 
 /// The basic notion of a tree has a parent, a payload, and a list of children.
 ///  It is the most abstract interface for all the trees used by ANTLR.
-abstract class Tree<ChildType> {
+abstract class Tree {
   Tree? get parent;
 
   dynamic get payload;
 
-  T? getChild<T extends ChildType>(int i);
-
-//  Tree getChild(int i);
+  Tree? getChild<T>(int i);
 
   int get childCount;
 
   String toStringTree();
 }
 
-abstract class SyntaxTree<ChildType> extends Tree<ChildType> {
+abstract class SyntaxTree extends Tree {
   /// Return an [Interval] indicating the index in the
   /// [TokenStream] of the first and last token associated with this
   /// subtree. If this node is a leaf, then the interval represents a single
@@ -44,18 +42,15 @@ abstract class SyntaxTree<ChildType> extends Tree<ChildType> {
   /// <p>As a weird special case, the source interval for rules matched after
   /// EOF is unspecified.</p>
   Interval get sourceInterval;
-
-  @override
-  T? getChild<T extends ChildType>(int i);
 }
 
-abstract class ParseTree extends SyntaxTree<ParseTree> {
+abstract class ParseTree extends SyntaxTree {
   // the following methods narrow the return type; they are not additional methods
   @override
   ParseTree? get parent;
 
   @override
-  T? getChild<T extends ParseTree>(int i);
+  ParseTree? getChild<T>(int i);
 
   /// Set the parent for this node.
   ///
@@ -71,7 +66,7 @@ abstract class ParseTree extends SyntaxTree<ParseTree> {
   ///  minimal change, which is to add this method.
   ///
   ///  @since 4.7
-  set parent(covariant ParseTree? parent); // Todo: review type fix
+  set parent(covariant ParseTree? parent);
 
   /// The [ParseTreeVisitor] needs a double dispatch method. */
   T? accept<T>(ParseTreeVisitor<T> visitor);
@@ -235,7 +230,7 @@ class TraceListener implements ParseTreeListener {
   @override
   void visitTerminal(TerminalNode node) {
     log('consume ${node.symbol} rule ' +
-        parser.ruleNames[parser.context.ruleIndex]);
+        parser.ruleNames[parser.context!.ruleIndex]);
   }
 
   @override
@@ -278,7 +273,7 @@ class TerminalNodeImpl extends TerminalNode {
   TerminalNodeImpl(this.symbol);
 
   @override
-  T? getChild<T extends ParseTree>(i) {
+  ParseTree? getChild<T>(i) {
     return null;
   }
 
@@ -289,7 +284,7 @@ class TerminalNodeImpl extends TerminalNode {
   Interval get sourceInterval {
     //if (symbol == null) return Interval.INVALID; Todo: review this nullability that nobody kind of defines, change here or change on to String
 
-    final tokenIndex = symbol!.tokenIndex;
+    final tokenIndex = symbol.tokenIndex;
     return Interval(tokenIndex, tokenIndex);
   }
 
@@ -316,7 +311,7 @@ class TerminalNodeImpl extends TerminalNode {
   @override
   String toString() {
     if (symbol.type == Token.EOF) return '<EOF>';
-    return symbol.text;
+    return symbol.text ?? '';
   }
 }
 
@@ -345,7 +340,7 @@ class ParseTreeWalker {
       listener.visitTerminal(t);
       return;
     }
-    RuleNode r = t as RuleNode; // Todo: review this cast: we have a confusion between RuleNode and ParseTree on this class
+    final r = t as RuleNode;
     enterRule(listener, r);
     for (var i = 0; i < r.childCount; i++) {
       walk(listener, r.getChild(i)!);
@@ -358,13 +353,15 @@ class ParseTreeWalker {
   /// [RuleContext]-specific event. First we trigger the generic and then
   /// the rule specific. We to them in reverse order upon finishing the node.
   void enterRule(ParseTreeListener listener, RuleNode r) {
-    var ctx = r.ruleContext as ParserRuleContext; // Todo: review this cast: we have a confusion between RuleNode and ParseTree on this class
+    var ctx = r.ruleContext
+        as ParserRuleContext; // Todo: review this cast: we have a confusion between RuleNode and ParseTree on this class
     listener.enterEveryRule(ctx);
     ctx.enterRule(listener);
   }
 
   void exitRule(ParseTreeListener listener, RuleNode r) {
-    var ctx = r.ruleContext as ParserRuleContext; // Todo: review this cast: we have a confusion between RuleNode and ParseTree on this class
+    var ctx = r.ruleContext
+        as ParserRuleContext; // Todo: review this cast: we have a confusion between RuleNode and ParseTree on this class
     ctx.exitRule(listener);
     listener.exitEveryRule(ctx);
   }

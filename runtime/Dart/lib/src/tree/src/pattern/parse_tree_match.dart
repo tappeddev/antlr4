@@ -23,12 +23,12 @@ class ParseTreeMatch {
   /// Get the parse tree we are trying to match to a pattern.
   ///
   /// @return The [ParseTree] we are trying to match to a pattern.
-  final ParseTree tree; //Todo: may never be null
+  final ParseTree tree;
 
   /// Get the tree pattern we are matching against.
   ///
   /// @return The tree pattern we are matching against.
-  final ParseTreePattern pattern; //Todo: may never be null
+  final ParseTreePattern pattern;
 
   /// Return a mapping from label &rarr; [list of nodes].
   ///
@@ -38,7 +38,7 @@ class ParseTreeMatch {
   ///
   /// @return A mapping from labels to parse tree nodes. If the parse tree
   /// pattern did not contain any rule or token tags, this map will be empty.
-  final MultiMap<String, ParseTree> labels; //Todo: may never be null
+  final MultiMap<String, ParseTree> labels;
 
   /// Get the node at which we first detected a mismatch.
   ///
@@ -274,12 +274,12 @@ class ParseTreePatternMatcher {
   /// @exception ArgumentError if [start] is null or empty.
   /// @exception ArgumentError if [stop] is null or empty.
   void setDelimiters(String start, String stop, String escapeLeft) {
-    if (start == null || start.isEmpty) {
-      throw ArgumentError.value(start, 'start', 'cannot be null or empty');
+    if (start.isEmpty) {
+      throw ArgumentError.value(start, 'start', 'cannot be empty');
     }
 
-    if (stop == null || stop.isEmpty) {
-      throw ArgumentError.value(stop, 'stop', 'cannot be null or empty');
+    if (stop.isEmpty) {
+      throw ArgumentError.value(stop, 'stop', 'cannot be empty');
     }
 
     this.start = start;
@@ -329,8 +329,13 @@ class ParseTreePatternMatcher {
     final tokenSrc = ListTokenSource(tokenList);
     final tokens = CommonTokenStream(tokenSrc);
 
-    final parserInterp = ParserInterpreter(parser.grammarFileName,
-        parser.vocabulary, parser.ruleNames, parser.ATNWithBypassAlts, tokens);
+    final parserInterp = ParserInterpreter(
+      parser.grammarFileName,
+      parser.vocabulary,
+      parser.ruleNames,
+      parser.ATNWithBypassAlts,
+      tokens,
+    );
 
     ParseTree tree;
     try {
@@ -342,7 +347,7 @@ class ParseTreePatternMatcher {
     } on RecognitionException {
       rethrow;
     } catch (e) {
-      throw CannotInvokeStartRule(e as String);
+      throw CannotInvokeStartRule(e.toString());
     }
 
     // Make sure tree pattern compilation checks for a complete parse
@@ -364,8 +369,8 @@ class ParseTreePatternMatcher {
   /// algorithm used by the implementation, and may be overridden.
 
   ParseTree? matchImpl(
-    ParseTree tree, // Todo: never make it null
-    ParseTree patternTree, // Todo: never make it null
+    ParseTree tree,
+    ParseTree patternTree,
     MultiMap<String, ParseTree> labels,
   ) {
     // x and <ID>, x and y, or x and x; or could be mismatched types
@@ -444,7 +449,7 @@ class ParseTreePatternMatcher {
     if (t is RuleNode) {
       final r = t;
       if (r.childCount == 1 && r.getChild(0) is TerminalNode) {
-        final c = r.getChild<TerminalNode>(0)!;
+        final c = r.getChild<TerminalNode>(0)! as TerminalNode;
         if (c.symbol is RuleTagToken) {
           return c.symbol as RuleTagToken;
         }

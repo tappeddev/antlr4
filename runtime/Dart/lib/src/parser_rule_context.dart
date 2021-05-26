@@ -43,7 +43,7 @@ class ParserRuleContext extends RuleContext {
   /// Get the initial/final token in this context.
   /// Note that the range from start to stop is inclusive, so for rules that do not consume anything
   /// (for example, zero length or error productions) this token may exceed stop.
-  late Token start, stop; // Todo: keep an eye on this late
+  Token? start, stop;
 
   /// The exception that forced this rule to return. If the rule successfully
   /// completed, this is null.
@@ -130,16 +130,16 @@ class ParserRuleContext extends RuleContext {
   // Override to make type more specific
   @override
   ParserRuleContext? get parent {
-    return super.parent as ParserRuleContext;
+    return super.parent as ParserRuleContext?;
   }
 
   @override
-  T? getChild<T extends ParseTree>(int i) {
+  ParseTree? getChild<T>(int i) {
     if (children == null || i < 0 || i >= children!.length) {
       return null;
     }
-    if (T == ParseTree) {
-      return children![i] as T;
+    if (T == dynamic) {
+      return children![i];
     }
     var j = -1; // what element have we found with ctxType?
     for (var o in children!) {
@@ -195,7 +195,7 @@ class ParserRuleContext extends RuleContext {
   }
 
   T? getRuleContext<T extends ParserRuleContext>(int i) {
-    return getChild<T>(i);
+    return getChild<T>(i) as T?;
   }
 
   List<T> getRuleContexts<T extends ParserRuleContext>() {
@@ -218,13 +218,10 @@ class ParserRuleContext extends RuleContext {
 
   @override
   Interval get sourceInterval {
-    if (start == null) {
-      return Interval.INVALID;
+    if (stop == null || stop!.tokenIndex < start!.tokenIndex) {
+      return Interval(start!.tokenIndex, start!.tokenIndex - 1); // empty
     }
-    if (stop == null || stop.tokenIndex < start.tokenIndex) {
-      return Interval(start.tokenIndex, start.tokenIndex - 1); // empty
-    }
-    return Interval(start.tokenIndex, stop.tokenIndex);
+    return Interval(start!.tokenIndex, stop!.tokenIndex);
   }
 
   /// Used for rule context info debugging during parse-time, not so much for ATN debugging */

@@ -93,21 +93,15 @@ abstract class Lexer extends Recognizer<LexerATNSimulator>
     mode_ = Lexer.DEFAULT_MODE;
     _modeStack.clear();
 
-    interpreter.reset();
+    interpreter?.reset();
   }
 
   /// Return a token from this source; i.e., match a token on the char stream.
   @override
   Token nextToken() {
-    if (_input == null) {
-      throw StateError('nextToken requires a non-null input stream.');
-    }
-
-    final _input_nonnull = _input!;
-
     // Mark start location in char stream so unbuffered streams are
     // guaranteed at least have text of current token
-    final tokenStartMarker = _input_nonnull.mark();
+    final tokenStartMarker = _input.mark();
     try {
       outer:
       while (true) {
@@ -118,9 +112,9 @@ abstract class Lexer extends Recognizer<LexerATNSimulator>
 
         _token = null;
         channel = Token.DEFAULT_CHANNEL;
-        tokenStartCharIndex = _input_nonnull.index;
-        tokenStartCharPositionInLine = interpreter.charPositionInLine;
-        tokenStartLine = interpreter.line;
+        tokenStartCharIndex = _input.index;
+        tokenStartCharPositionInLine = interpreter!.charPositionInLine;
+        tokenStartLine = interpreter!.line;
         _text = null;
         do {
           type = Token.INVALID_TYPE;
@@ -129,13 +123,13 @@ abstract class Lexer extends Recognizer<LexerATNSimulator>
 //								   " at index "+input.index());
           late int ttype;
           try {
-            ttype = interpreter.match(_input_nonnull, mode_);
+            ttype = interpreter!.match(_input, mode_);
           } on LexerNoViableAltException catch (e) {
             notifyListeners(e); // report error
             recover(e);
             ttype = SKIP;
           }
-          if (_input_nonnull.LA(1) == IntStream.EOF) {
+          if (_input.LA(1) == IntStream.EOF) {
             _hitEOF = true;
           }
           if (type == Token.INVALID_TYPE) type = ttype;
@@ -149,7 +143,7 @@ abstract class Lexer extends Recognizer<LexerATNSimulator>
     } finally {
       // make sure we release marker after match or
       // unbuffered char stream will keep buffering
-      _input_nonnull.release(tokenStartMarker);
+      _input.release(tokenStartMarker);
     }
   }
 
@@ -196,7 +190,7 @@ abstract class Lexer extends Recognizer<LexerATNSimulator>
 
   @override
   String get sourceName {
-    return _input!.sourceName;
+    return _input.sourceName;
   }
 
   @override
@@ -234,28 +228,36 @@ abstract class Lexer extends Recognizer<LexerATNSimulator>
 
   Token emitEOF() {
     final cpos = charPositionInLine;
-    final eof = tokenFactory.create(Token.EOF, null, _tokenFactorySourcePair,
-        Token.DEFAULT_CHANNEL, _input.index, _input.index - 1, line, cpos);
+    final eof = tokenFactory.create(
+      Token.EOF,
+      null,
+      _tokenFactorySourcePair,
+      Token.DEFAULT_CHANNEL,
+      _input.index,
+      _input.index - 1,
+      line,
+      cpos,
+    );
     emitToken(eof);
     return eof;
   }
 
   @override
   int get charPositionInLine {
-    return interpreter.charPositionInLine;
+    return interpreter!.charPositionInLine;
   }
 
   @override
   int get line {
-    return interpreter.line;
+    return interpreter!.line;
   }
 
   set line(int line) {
-    interpreter.line = line;
+    interpreter!.line = line;
   }
 
   set charPositionInLine(int charPositionInLine) {
-    interpreter.charPositionInLine = charPositionInLine;
+    interpreter!.charPositionInLine = charPositionInLine;
   }
 
   /// What is the index of the current character of lookahead?
@@ -269,7 +271,7 @@ abstract class Lexer extends Recognizer<LexerATNSimulator>
     if (_text != null) {
       return _text!;
     }
-    return interpreter.getText(_input);
+    return interpreter!.getText(_input);
   }
 
   /// Set the complete text of this token; it wipes any previous
@@ -335,7 +337,7 @@ abstract class Lexer extends Recognizer<LexerATNSimulator>
     if (re is LexerNoViableAltException) {
       if (_input.LA(1) != IntStream.EOF) {
         // skip a char and try again
-        interpreter.consume(_input);
+        interpreter!.consume(_input);
       }
     } else {
       //System.out.println("consuming char "+(char)input.LA(1)+" during recovery");

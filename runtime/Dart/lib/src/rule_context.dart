@@ -135,7 +135,7 @@ abstract class RuleContext extends RuleNode {
   set altNumber(int altNumber) {}
 
   @override
-  T? getChild<T extends ParseTree>(int i) {
+  ParseTree? getChild<T>(int i) {
     return null;
   }
 
@@ -143,7 +143,7 @@ abstract class RuleContext extends RuleNode {
   int get childCount => 0;
 
   @override
-  T accept<T>(ParseTreeVisitor<T> visitor) {
+  T? accept<T>(ParseTreeVisitor<T> visitor) {
     return visitor.visitChildren(this);
   }
 
