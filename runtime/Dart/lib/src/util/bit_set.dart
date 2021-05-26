@@ -148,8 +148,12 @@ class BitSet {
   static int BitScanForward(int value) {
     if (value == 0) return -1;
 
-    const debruijn64 = 0x03f79d71b4cb0a89;
-    return index64[(((value ^ (value - 1)) * debruijn64) >> 58) % 64];
+    final debruijn64 = BigInt.parse('0x03f79d71b4cb0a89');
+    final bigIntValue = BigInt.from(value);
+    var index =
+        (((bigIntValue ^ (bigIntValue - BigInt.from(1))) * debruijn64) >> 58) %
+            BigInt.from(64);
+    return index64[index.toInt()];
   }
 
   BitSet clone() {
